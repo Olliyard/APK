@@ -16,25 +16,34 @@ void Intersection::changeLights() {
 
 void Intersection::addVehicleToQueue(Vehicle* vehicle) {
     std::lock_guard<std::mutex> guard(mtx);
-    vehicleQueue.push(vehicle);
+    if (vehicle->isEmergencyVehicle()) {
+        vehicleQueue.push_front(vehicle);
+    }
+    else {
+        vehicleQueue.push_back(vehicle);
+    }
+    sortVehicleQueue();
+
 }
 
 void Intersection::processQueue() {
-    // Process the queue based on the current light status
     std::unique_lock<std::mutex> lock(mtx);
-    while (true){
-        cv.wait(lock, [this] { return currentLight == TrafficLight::GREEN; });
+    sortVehicleQueue();
+    while (true) {
+        // Wait until light is green or there are vehicles in queue and the first vehicle is an emergency vehicle
+        cv.wait(lock, [this] { return currentLight == TrafficLight::GREEN || (!vehicleQueue.empty() && vehicleQueue.front()->isEmergencyVehicle()); });
 
-        while (!vehicleQueue.empty() && currentLight == TrafficLight::GREEN) {
+        // Process the vehicle queue
+        while (!vehicleQueue.empty() && (currentLight == TrafficLight::GREEN || vehicleQueue.front()->isEmergencyVehicle())) {
+            // Remove the vehicle from the queue
             auto vehicle = vehicleQueue.front();
-            vehicleQueue.pop();
-            // Simulate vehicle passing
             std::cout << "Vehicle " << vehicle->getId() << " is passing the intersection.\n";
-            // Add a delay to simulate the time taken for a vehicle to pass
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            vehicleQueue.pop_front();
+            std::this_thread::sleep_for(std::chrono::milliseconds(500)); // simulate processing time
         }
     }
 }
+
 
 void Intersection::updateLights() {
     auto now = std::chrono::steady_clock::now();
@@ -55,4 +64,33 @@ void Intersection::updateLights() {
             lastChange = now;
         }
     }
+}
+
+template <typename SettingType>
+void Intersection::applySetting(const SettingType& settings) {
+    if constexpr (std::is_same<SettingType, LightDuration>::value) {
+        // Apply settings for LightDuration
+        greenDuration = std::chrono::seconds(settings.greenDuration);
+        redDuration = std::chrono::seconds(settings.redDuration);
+    } else if constexpr (std::is_same<SettingType, PriorityThreshold>::value) {
+        // Apply settings for PriorityThreshold
+        threshold = settings.vehicleCount;
+    } else {
+        // Handle other types or throw an exception
+        throw std::invalid_argument("Unsupported setting type");
+    }
+}
+
+
+template <typename... Settings>
+void configureIntersection(Intersection& intersection, Settings... settings) {
+    (intersection.applySetting(settings), ...);
+}
+
+void Intersection::sortVehicleQueue() {
+    std::sort(vehicleQueue.begin(), vehicleQueue.end(), [](const Vehicle* a, const Vehicle* b) {
+        // Prioritize emergency vehicles
+        if (a->isEmergencyVehicle() && !b->isEmergencyVehicle()) return true;
+        if (!a->isEmergencyVehicle() && b->isEmergencyVehicle()) return false;
+    });
 }
