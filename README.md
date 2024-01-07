@@ -1,6 +1,6 @@
 # Project: Urban Traffic Management Simulator
 ## Concept
-Develop a simulator for managing urban traffic, focusing on the flow and control of vehicles at intersections, including traffic lights, pedestrian crossings, and emergency vehicle prioritization.
+A simulator for managing urban traffic, focusing on the flow and control of vehicles at intersections, including traffic lights, pedestrian crossings, and emergency vehicle prioritization.
 This project is inspired by the complexity and real-world applicability of such a management system.
 
 ### Topics covered:
