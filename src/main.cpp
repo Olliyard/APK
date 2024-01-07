@@ -4,7 +4,7 @@
 
 int main(){
     TrafficControlCenter controlCenter;
-    Intersection intersection1;
+    Intersection intersection1("1");
 
     controlCenter.addIntersection(&intersection1);
 
@@ -19,8 +19,9 @@ int main(){
     // Simulate some traffic
     int vehicleCounter = 0;
     while(true){
-        auto* vehicle = new Vehicle(std::to_string(vehicleCounter++), "Car");
-        intersection1.addVehicleToQueue(vehicle);
+
+        std::unique_ptr<Vehicle> newVehicle = std::make_unique<Vehicle>(std::to_string(vehicleCounter++), "Car", false);
+        intersection1.addVehicleToQueue(std::move(newVehicle));
 
         // Simulate a vehicle arriving at the intersection every two seconds
         std::this_thread::sleep_for(std::chrono::seconds(2));

@@ -1,6 +1,10 @@
 #include "../include/Intersection.h"
 
-Intersection::Intersection() : currentLight(TrafficLight::RED), threshold(5) {}
+Intersection::Intersection(const std::string& id) : id(id), currentLight(TrafficLight::RED), threshold(5) {}
+
+std::string Intersection::getId() const {
+    return id;
+}
 
 void Intersection::changeLights() {
     // Logic to change the traffic lights
@@ -14,13 +18,13 @@ void Intersection::changeLights() {
     }
 }
 
-void Intersection::addVehicleToQueue(Vehicle* vehicle) {
+void Intersection::addVehicleToQueue(std::unique_ptr<Vehicle> vehicle) {
     std::lock_guard<std::mutex> guard(mtx);
     if (vehicle->isEmergencyVehicle()) {
-        vehicleQueue.push_front(vehicle);
+        vehicleQueue.push_front(std::move(vehicle));
     }
     else {
-        vehicleQueue.push_back(vehicle);
+        vehicleQueue.push_back(std::move(vehicle));
     }
     sortVehicleQueue();
 
@@ -28,26 +32,34 @@ void Intersection::addVehicleToQueue(Vehicle* vehicle) {
 
 void Intersection::processQueue() {
     std::unique_lock<std::mutex> lock(mtx);
-    sortVehicleQueue();
     while (true) {
-        // Wait until light is green or there are vehicles in queue and the first vehicle is an emergency vehicle
-        cv.wait(lock, [this] { return currentLight == TrafficLight::GREEN || (!vehicleQueue.empty() && vehicleQueue.front()->isEmergencyVehicle()); });
+        cv.wait(lock, [this] { 
+            return !vehicleQueue.empty() && 
+                   (vehicleQueue.front()->isEmergencyVehicle() || currentLight == TrafficLight::GREEN);
+        });
 
-        // Process the vehicle queue
-        while (!vehicleQueue.empty() && (currentLight == TrafficLight::GREEN || vehicleQueue.front()->isEmergencyVehicle())) {
-            // Remove the vehicle from the queue
-            auto vehicle = vehicleQueue.front();
+        while (!vehicleQueue.empty() && 
+               (vehicleQueue.front()->isEmergencyVehicle() || currentLight == TrafficLight::GREEN)) {
+            // Process the vehicle at the front of the queue
+            auto& vehicle = vehicleQueue.front();
             std::cout << "Vehicle " << vehicle->getId() << " is passing the intersection.\n";
             vehicleQueue.pop_front();
-            std::this_thread::sleep_for(std::chrono::milliseconds(500)); // simulate processing time
+            std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Simulate processing time
+
+            if (vehicleQueue.empty() || currentLight != TrafficLight::GREEN) {
+                break; // Stop processing if the light is not green and no emergency vehicle is waiting
+            }
         }
     }
 }
 
 
+
 void Intersection::updateLights() {
     auto now = std::chrono::steady_clock::now();
     auto queueSize = vehicleQueue.size();
+    greenDuration = std::chrono::seconds(settings["greenDuration"]);
+    redDuration = std::chrono::seconds(settings["redDuration"]);
 
     if (currentLight == TrafficLight::GREEN) {
         // If there are vehicles in the queue and the light has been green for defined time
@@ -69,14 +81,11 @@ void Intersection::updateLights() {
 template <typename SettingType>
 void Intersection::applySetting(const SettingType& settings) {
     if constexpr (std::is_same<SettingType, LightDuration>::value) {
-        // Apply settings for LightDuration
-        greenDuration = std::chrono::seconds(settings.greenDuration);
-        redDuration = std::chrono::seconds(settings.redDuration);
+        this->settings["greenDuration"] = settings.greenDuration;
+        this->settings["redDuration"] = settings.redDuration;
     } else if constexpr (std::is_same<SettingType, PriorityThreshold>::value) {
-        // Apply settings for PriorityThreshold
-        threshold = settings.vehicleCount;
+        this->settings["vehicleCount"] = settings.vehicleCount;
     } else {
-        // Handle other types or throw an exception
         throw std::invalid_argument("Unsupported setting type");
     }
 }
@@ -89,8 +98,8 @@ void configureIntersection(Intersection& intersection, Settings... settings) {
 
 void Intersection::sortVehicleQueue() {
     std::sort(vehicleQueue.begin(), vehicleQueue.end(), [](const Vehicle* a, const Vehicle* b) {
-        // Prioritize emergency vehicles
         if (a->isEmergencyVehicle() && !b->isEmergencyVehicle()) return true;
         if (!a->isEmergencyVehicle() && b->isEmergencyVehicle()) return false;
+        return false;
     });
 }

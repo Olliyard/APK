@@ -13,6 +13,15 @@ void TrafficControlCenter::manageTraffic() {
     }
 }
 
+// void TrafficControlCenter::emergencyVehicleApproach(const std::string& intersectionId) {
+//     emergencySignal(intersectionId);
+// }
+
 void TrafficControlCenter::emergencyVehicleApproach(const std::string& intersectionId) {
-    emergencySignal(intersectionId);
+    for (auto& intersection : intersections) {
+        if (intersection->getId() == intersectionId) {
+            intersection->processQueue();
+            break;
+        }
+    }
 }

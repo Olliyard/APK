@@ -24,10 +24,11 @@ struct PriorityThreshold {
 
 class Intersection {
 public:
-    Intersection();
+    Intersection(const std::string& id);
+    std::string getId() const;
     std::map<std::string, int> settings;
     void changeLights();
-    void addVehicleToQueue(Vehicle* vehicle);
+    void addVehicleToQueue(std::unique_ptr<Vehicle> vehicle);
     void processQueue();
     void updateLights();
     template <typename SettingType>
@@ -37,13 +38,14 @@ public:
 private:
     enum class TrafficLight { RED, YELLOW, GREEN };
     TrafficLight currentLight;
-    std::deque<Vehicle*> vehicleQueue;
+    std::deque<std::unique_ptr<Vehicle>> vehicleQueue;
     std::mutex mtx;
     std::condition_variable cv;
     std::chrono::steady_clock::time_point lastChange;
     std::chrono::seconds greenDuration;
     std::chrono::seconds redDuration;
     unsigned int threshold; // Number of vehicles that trigger the light change
+    std::string id;
 };
 
 #endif // INTERSECTION_H

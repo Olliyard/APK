@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "Intersection.h"
-#include <boost/signals2.hpp>
+// #include <boost/signals2.hpp>
 
 class TrafficControlCenter {
 public:
@@ -15,7 +15,7 @@ public:
 
 private:
     std::vector<Intersection*> intersections;
-    boost::signals2::signal<void(std::string)> emergencySignal;
+    // boost::signals2::signal<void(std::string)> emergencySignal;
 };
 
 #endif // TRAFFIC_CONTROL_CENTER_H

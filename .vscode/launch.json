@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/revil/Desktop/Git_Repos/APK/bin",
-      "program": "c:/Users/revil/Desktop/Git_Repos/APK/bin/build/Debug/outDebug",
+      "cwd": "c:/Users/revil/Desktop/Git_Repos/APK",
+      "program": "c:/Users/revil/Desktop/Git_Repos/APK/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
