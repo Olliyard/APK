@@ -21,7 +21,7 @@ void Intersection::addVehicleToQueue(Vehicle* vehicle) {
 
 void Intersection::processQueue() {
     // Process the queue based on the current light status
-    std::lock_guard<std::mutex> lock(mtx);
+    std::unique_lock<std::mutex> lock(mtx);
     while (true){
         cv.wait(lock, [this] { return currentLight == TrafficLight::GREEN; });
 

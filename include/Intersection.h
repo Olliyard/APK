@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include <chrono>
 #include <iostream>
+#include <thread>
 #include "Vehicle.h"
 
 class Intersection {
