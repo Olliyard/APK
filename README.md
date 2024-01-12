@@ -11,9 +11,6 @@ ___
 * **Exceptions**: Handle unexpected situations like system errors or data inconsistencies.
 * **Moving and Smart Pointers (Polymorphic Memory Resource)**: Efficiently manage memory for dynamic traffic data.
 * **Threading**: Simulate real-time traffic flow and concurrent processing of multiple intersections.
-* **Boost Signals2**: Implement event-driven responses to traffic changes, like emergency vehicle approach.
-* **C++ Concepts and SFINAE**: Ensure type safety and correct template usage, particularly in vehicle and intersection management.
-* **Metaprogramming**: Optimize traffic flow calculations and real-time decision-making processes.
 
 ## Structure
 1. **Intersection Module**: Handles traffic light control and vehicle queues.
